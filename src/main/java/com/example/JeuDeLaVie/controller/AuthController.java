@@ -17,11 +17,6 @@ public class AuthController {
 
     private final UserService userService;
 
-    @GetMapping("/home")
-    public String home() {
-        return "home";
-    }
-
     @RequestMapping("/login")
     public String login() {
         return "login";

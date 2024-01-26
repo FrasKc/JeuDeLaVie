@@ -1,12 +1,43 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Home</title>
+    <title>Game of Life</title>
     <link rel="stylesheet" href="/css/style.css">
+    <script>
+        function updateBoard() {
+            fetch('/advance', { method: 'POST' })
+                .then(response => response.json())
+                .then(board => {
+                    const table = document.querySelector('table');
+                    let newTableContent = '';
+                    for (const row of board) {
+                        newTableContent += '<tr>';
+                        for (const cell of row) {
+                            newTableContent += `<td class="${cell ? 'alive' : 'dead'}"></td>`;
+                        }
+                        newTableContent += '</tr>';
+                    }
+                    table.innerHTML = newTableContent;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        setInterval(updateBoard, 100);
+    </script>
 </head>
 <body>
 <div class="container">
-    <h2>Welcome to the Game of Life</h2>
+    <h2>Game of Life</h2>
+    <form th:action="@{/startGame}" method="post">
+        <input type="submit" value="Start Game">
+    </form>
+    <br>
+    <div>
+        <table>
+            <tr th:each="row, rowIndex : ${board}">
+                <td th:each="cell, colIndex : ${row}" th:class="${cell ? 'alive' : 'dead'}"></td>
+            </tr>
+        </table>
+    </div>
 </div>
 </body>
 </html>

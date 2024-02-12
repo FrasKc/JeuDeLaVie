@@ -58,3 +58,23 @@ td {
     border: 1px solid black;
     text-align: center;
 }
+
+.chat-container {
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    padding: 10px;
+}
+.message-area {
+    height: 200px;
+    overflow-y: scroll;
+    border: 1px solid #ccc;
+    padding: 5px;
+    margin-bottom: 10px;
+}
+.message-input {
+    width: 75%;
+    padding: 10px;
+}
+.send-button {
+    width: 20%;
+}

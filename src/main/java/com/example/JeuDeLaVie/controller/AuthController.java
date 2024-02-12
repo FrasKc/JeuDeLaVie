@@ -2,6 +2,7 @@ package com.example.JeuDeLaVie.controller;
 
 import com.example.JeuDeLaVie.model.User;
 import com.example.JeuDeLaVie.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 
@@ -24,9 +25,11 @@ public class AuthController {
 
     @PostMapping("/login")
     public ModelAndView login(@RequestParam("username") String username,
-                              @RequestParam("password") String password) {
+                              @RequestParam("password") String password,
+                              HttpServletRequest request) {
         boolean auth = userService.authenticateUser(username, password);
         if (auth) {
+            request.getSession().setAttribute("username", username); // Stockez le nom d'utilisateur dans la session
             return new ModelAndView("redirect:/home");
         } else {
             ModelAndView modelAndView = new ModelAndView("login");
@@ -34,6 +37,7 @@ public class AuthController {
             return modelAndView;
         }
     }
+
 
     @RequestMapping("/register")
     public String register() {

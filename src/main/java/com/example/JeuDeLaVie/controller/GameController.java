@@ -24,8 +24,6 @@ public class GameController {
         return "home";
     }
 
-
-
     @PostMapping("/startGame")
     public String startGame() {
         gameService.initializeBoardWithRandomPattern();

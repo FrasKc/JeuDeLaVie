@@ -3,9 +3,47 @@
 <head>
     <title>Game of Life</title>
     <link rel="stylesheet" href="/css/style.css">
-    <script>
-        function updateBoard() {
-            fetch('/advance', { method: 'POST' })
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var username = /*[[${session.username}]]*/ 'Anonymous';
+        /*]]>*/
+        var stompClient = null;
+
+        function connect() {
+            var socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, function(frame) {
+                stompClient.subscribe('/topic/public', function(messageOutput) {
+                    var message = JSON.parse(messageOutput.body);
+                    displayMessage(message.sender, message.content);
+                });
+            });
+        }
+
+        function sendMessage() {
+            var messageContent = document.getElementById("messageInput").value;
+            if(messageContent && stompClient) {
+                var chatMessage = {sender: username, content: messageContent};
+                stompClient.send("/app/message", {}, JSON.stringify(chatMessage));
+                document.getElementById("messageInput").value = '';
+            }
+        }
+
+        function displayMessage(sender, content) {
+            var messageArea = document.getElementById("messageArea");
+            var messageElement = document.createElement("div");
+            messageElement.classList.add("message");
+            messageElement.innerHTML = `<strong>${sender}</strong>: ${content}`;
+            messageArea.appendChild(messageElement);
+            messageArea.scrollTop = messageArea.scrollHeight;
+        }
+
+        window.onload = connect;
+
+            function updateBoard() {
+            fetch('/advance', {method: 'POST'})
                 .then(response => response.json())
                 .then(board => {
                     const table = document.querySelector('table');
@@ -21,7 +59,8 @@
                 })
                 .catch(error => console.error('Error:', error));
         }
-        setInterval(updateBoard, 100);
+            setInterval(updateBoard, 100);
+
     </script>
 </head>
 <body>
@@ -38,6 +77,11 @@
             </tr>
         </table>
     </div>
+</div>
+<div id="chat-page" class="chat-container">
+    <div id="messageArea" class="message-area"></div>
+    <input type="text" id="messageInput" placeholder="Type a message..." class="message-input">
+    <button onclick="sendMessage()" class="send-button">Send</button>
 </div>
 </body>
 </html>

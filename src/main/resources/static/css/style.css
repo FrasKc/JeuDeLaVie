@@ -39,3 +39,22 @@ input[type="submit"] {
 input[type="submit"]:hover {
     background-color: #0056b3;
 }
+
+.alive {
+    background-color: green; /* Les cellules vivantes seront vertes */
+}
+
+.dead {
+    background-color: white; /* Les cellules mortes seront blanches */
+}
+
+
+table {
+    border-collapse: collapse;
+}
+td {
+    width: 20px;
+    height: 20px;
+    border: 1px solid black;
+    text-align: center;
+}

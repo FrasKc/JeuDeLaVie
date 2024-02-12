@@ -1,12 +1,10 @@
 package com.example.JeuDeLaVie.model;
 
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
-@RequiredArgsConstructor
 @Data
 public class Rule {
     @Id
@@ -14,5 +12,8 @@ public class Rule {
     private int aliveNeighborsToStayAlive;
     private int deadNeighborsToBecomeAlive;
 
-
+    public Rule(int aliveNeighborsToStayAlive, int deadNeighborsToBecomeAlive) {
+        this.aliveNeighborsToStayAlive = aliveNeighborsToStayAlive;
+        this.deadNeighborsToBecomeAlive = deadNeighborsToBecomeAlive;
+    }
 }

@@ -3,9 +3,85 @@
 <head>
     <title>Game of Life</title>
     <link rel="stylesheet" href="/css/style.css">
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var username = /*[[${session.username}]]*/ 'Anonymous';
+        /*]]>*/
+        var stompClient = null;
+        var updateInterval = null;
+
+        function connect() {
+            var socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, function(frame) {
+                console.log('Connected: ' + frame);
+                stompClient.subscribe('/topic/public', function(messageOutput) {
+                    var message = JSON.parse(messageOutput.body);
+                    displayMessage(message.sender, message.content);
+                    if(message.content.startsWith("Proposition de règle:")) {
+                        displayRuleProposal(message.content);
+                    }
+                });
+                stompClient.send("/app/requestCurrentRule", {}, JSON.stringify({requester: username}));
+            });
+            startUpdatingBoard();
+        }
+
+        function sendMessage() {
+            var messageContent = document.getElementById("messageInput").value;
+            if(messageContent && stompClient) {
+                var chatMessage = {sender: username, content: messageContent};
+                stompClient.send("/app/message", {}, JSON.stringify(chatMessage));
+                document.getElementById("messageInput").value = '';
+            }
+        }
+
+        function displayMessage(sender, content) {
+            var messageArea = document.getElementById("messageArea");
+            var messageElement = document.createElement("div");
+            messageElement.classList.add("message");
+            messageElement.innerHTML = `<strong>${sender}</strong>: ${content}`;
+            messageArea.appendChild(messageElement);
+            messageArea.scrollTop = messageArea.scrollHeight;
+
+            // Mise à jour de la règle actuelle si le message contient des informations sur la règle
+            if(content.startsWith("Les règles ont été mises à jour")) {
+                var ruleText = content.match(/Reste en vie avec (\d+) voisins, devient vivante avec (\d+) voisins/);
+                if(ruleText && ruleText.length > 2) {
+                    document.getElementById("currentRule").innerText = ruleText[1] + "," + ruleText[2];
+                }
+            }
+        }
+
+        function displayRuleProposal(proposalText) {
+            var proposalArea = document.getElementById("proposalArea");
+            proposalArea.innerHTML = `${proposalText} <br/>
+        <button onclick='vote(true)'>Accepter</button>
+        <button onclick='vote(false)'>Rejeter</button>`;
+        }
+
+        function vote(accept) {
+            stompClient.send("/app/vote", {}, JSON.stringify({accept: accept}));
+            var proposalArea = document.getElementById("proposalArea");
+            proposalArea.innerHTML = "Merci pour votre vote!";
+        }
+
+        function stopGame() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+                console.log('Game stopped');
+            }
+        }
+
+        function startUpdatingBoard() {
+            updateInterval = setInterval(updateBoard, 100);
+        }
+
         function updateBoard() {
-            fetch('/advance', { method: 'POST' })
+            fetch('/advance', {method: 'POST'})
                 .then(response => response.json())
                 .then(board => {
                     const table = document.querySelector('table');
@@ -21,7 +97,8 @@
                 })
                 .catch(error => console.error('Error:', error));
         }
-        setInterval(updateBoard, 100);
+
+        window.onload = connect;
     </script>
 </head>
 <body>
@@ -30,6 +107,15 @@
     <form th:action="@{/startGame}" method="post">
         <input type="submit" value="Start Game">
     </form>
+    <button style="margin-top: 10px;
+    margin-bottom: 10px;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    background-color: #e34d4d;
+    color: white;
+    cursor: pointer;" onclick="stopGame()">Stop Game</button>
     <br>
     <div>
         <table>
@@ -38,6 +124,18 @@
             </tr>
         </table>
     </div>
+</div>
+<div id="chat-page" class="chat-container">
+    <div id="messageArea" class="message-area"></div>
+    <input type="text" id="messageInput" placeholder="Type a message..." class="message-input">
+    <button onclick="sendMessage()" style="
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;">Send</button>
+    <div id="proposalArea" style="margin-top: 20px;"></div>
 </div>
 </body>
 </html>
